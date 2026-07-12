@@ -1099,6 +1099,20 @@ textarea.campo-observacoes::placeholder { color: var(--cor-texto-fraco); }
 .linha-total.linha-total-final { font-family: var(--fonte-display); font-size: 1.2rem; font-weight: 800; color: var(--cor-texto); padding-top: var(--sp-3); border-top: 1px solid var(--cor-borda); }
 .linha-total.linha-total-final span:last-child { color: var(--cor-amarelo); }
 
+.aviso-loja-fechada {
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--raio-sm);
+  background: rgba(255,82,82,0.1);
+  border: 1px solid rgba(255,82,82,0.3);
+  color: var(--cor-vermelho);
+  font-size: 0.82rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.aviso-loja-fechada svg { width: 18px; height: 18px; flex-shrink: 0; }
+
 /* ============================================================================
    11. CHECKOUT (Retirada / Entrega)
    ========================================================================== */

@@ -55,9 +55,13 @@ landing-page/
 │   └── script.js           → Toda a interatividade (carrossel, modais, cardápio...)
 ├── assets/
 │   ├── images/             → Pasta para imagens próprias (burgers/drinks/desserts)
-│   ├── icons/               → favicon.svg (ícone do site)
+│   ├── icons/               → favicon.svg + ícones PNG (192/512) do site
 │   └── fonts/               → (opcional) fontes customizadas
+├── google-sheets/
+│   ├── apps-script.gs       → Código para colar no Google Apps Script
+│   └── README.md            → Passo a passo da integração com planilha
 ├── manifest.json           → Configuração PWA (ícone, cor do tema)
+├── sw.js                    → Service worker (PWA instalável + cache offline)
 ├── robots.txt               → Instruções para buscadores
 ├── sitemap.xml               → Mapa do site para SEO
 └── README.md                → Este arquivo
@@ -84,7 +88,7 @@ whatsapp: {
 
 ### 2. Logo
 Por padrão, o site exibe o nome da empresa em texto estilizado
-(`botekos`). Se quiser usar uma imagem de logo:
+(`FÁBRICA.SMASH`). Se quiser usar uma imagem de logo:
 1. Coloque o arquivo em `assets/images/logo.svg` (ou `.png`).
 2. No `index.html`, troque o texto dentro de `<a class="marca">` por uma tag `<img>` apontando para o arquivo.
 
@@ -128,6 +132,43 @@ correspondente.
 Por padrão, o projeto usa imagens de exemplo (Unsplash) apenas para fins de
 demonstração. Substitua os links no campo `imagem` de cada produto em
 `produtos.js` por fotos reais — o ideal é hospedá-las em `assets/images/`.
+
+### 11. Bloqueio de pedidos fora do horário de funcionamento
+O site verifica automaticamente se a loja está aberta antes de deixar o
+cliente finalizar o pedido, usando os horários configurados em
+`js/config.js` (`CONFIG.horario.periodos`). Quando fechado, o botão
+"Finalizar Pedido" fica desabilitado e um aviso aparece no carrinho
+informando quando a loja reabre.
+
+**Para desligar essa checagem** (aceitar pedidos a qualquer hora, como
+antes), basta trocar em `config.js`:
+```js
+horario: {
+  verificarAntesDeFinalizar: false, // ⭐ desliga o bloqueio
+  ...
+}
+```
+Nenhuma outra alteração é necessária. Os horários usados no cálculo ficam
+em `CONFIG.horario.periodos` — mantenha sempre alinhados com o texto
+exibido em `CONFIG.horario.linhas` (um é a regra, o outro é só o texto
+mostrado no rodapé).
+
+### 12. Registro automático de pedidos em uma planilha (Google Sheets)
+O site pode enviar automaticamente um resumo de cada pedido finalizado
+(itens, valores, forma de recebimento, dados de entrega) para uma planilha
+do Google Sheets — permitindo calcular quantos pedidos foram feitos, valor
+bruto arrecadado, produto mais vendido, ticket médio etc.
+
+Essa integração vem **desligada por padrão**. O passo a passo completo
+para criar a planilha, publicar o script e conectar ao site está em
+[`google-sheets/README.md`](./google-sheets/README.md). Depois de
+configurada, basta alterar em `config.js`:
+```js
+googleSheets: {
+  ativado: true, // ⭐ liga o envio automático dos pedidos para a planilha
+  urlWebApp: "https://script.google.com/macros/s/SEU-CODIGO/exec"
+}
+```
 
 ---
 

@@ -310,6 +310,94 @@ function renderizarDiferenciais() {
 }
 
 /* ============================================================================
+   5.2 HORÁRIO DE FUNCIONAMENTO — bloqueio de pedidos fora do horário
+   ----------------------------------------------------------------------------
+   Calcula se a loja está aberta agora com base em CONFIG.horario.periodos.
+   Para desligar completamente esse bloqueio, basta trocar
+   CONFIG.horario.verificarAntesDeFinalizar para `false` em config.js —
+   nenhum código aqui precisa ser alterado.
+   ========================================================================== */
+const HorarioFuncionamento = (function () {
+
+  // Converte "18:30" em minutos desde a meia-noite (1110)
+  function paraMinutos(horaTexto) {
+    const [h, m] = horaTexto.split(":").map(Number);
+    return h * 60 + m;
+  }
+
+  // Verifica se um instante (Date) cai dentro de algum dos períodos configurados.
+  // Períodos que passam da meia-noite (ex: abre 18:00, fecha 00:30) são
+  // tratados corretamente, checando também o dia anterior.
+  function estaDentroDoHorario(periodos, agora) {
+    const diaAtual = agora.getDay();
+    const diaAnterior = (diaAtual + 6) % 7;
+    const minutosAgora = agora.getHours() * 60 + agora.getMinutes();
+
+    return periodos.some(periodo => {
+      const abre = paraMinutos(periodo.abre);
+      const fecha = paraMinutos(periodo.fecha);
+      const cruzaMeiaNoite = fecha <= abre;
+
+      if (!cruzaMeiaNoite) {
+        return periodo.dias.includes(diaAtual) && minutosAgora >= abre && minutosAgora < fecha;
+      }
+      const aindaNoDiaDeAbertura = periodo.dias.includes(diaAtual) && minutosAgora >= abre;
+      const jaNaMadrugadaSeguinte = periodo.dias.includes(diaAnterior) && minutosAgora < fecha;
+      return aindaNoDiaDeAbertura || jaNaMadrugadaSeguinte;
+    });
+  }
+
+  // Retorna true se o site deve aceitar pedidos agora. Se a checagem estiver
+  // desligada em config.js, sempre retorna true (comportamento antigo).
+  function estaAberto() {
+    if (!CONFIG.horario.verificarAntesDeFinalizar) return true;
+    return estaDentroDoHorario(CONFIG.horario.periodos, new Date());
+  }
+
+  // Encontra o próximo instante (Date) em que a loja abre, olhando até 7 dias à frente
+  function proximaAbertura() {
+    const agora = new Date();
+    for (let offset = 0; offset < 8; offset++) {
+      const dia = (agora.getDay() + offset) % 7;
+      let melhorHorario = null;
+
+      CONFIG.horario.periodos.forEach(periodo => {
+        if (!periodo.dias.includes(dia)) return;
+        const [h, m] = periodo.abre.split(":").map(Number);
+        const dataAbertura = new Date(agora);
+        dataAbertura.setDate(agora.getDate() + offset);
+        dataAbertura.setHours(h, m, 0, 0);
+        if (dataAbertura > agora && (!melhorHorario || dataAbertura < melhorHorario)) {
+          melhorHorario = dataAbertura;
+        }
+      });
+
+      if (melhorHorario) return melhorHorario;
+    }
+    return null;
+  }
+
+  // Monta uma frase amigável: "Abrimos hoje às 18:00" / "Abrimos amanhã às 18:00" / "Abrimos sexta-feira às 18:00"
+  function formatarProximaAbertura() {
+    const data = proximaAbertura();
+    if (!data) return "Confira nosso horário de funcionamento.";
+
+    const agora = new Date();
+    const amanha = new Date(agora);
+    amanha.setDate(agora.getDate() + 1);
+
+    const hora = data.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+
+    if (data.toDateString() === agora.toDateString()) return `Abrimos hoje às ${hora}`;
+    if (data.toDateString() === amanha.toDateString()) return `Abrimos amanhã às ${hora}`;
+    const diaSemana = data.toLocaleDateString("pt-BR", { weekday: "long" });
+    return `Abrimos ${diaSemana} às ${hora}`;
+  }
+
+  return { estaAberto, formatarProximaAbertura };
+})();
+
+/* ============================================================================
    6. RENDERIZAÇÃO DO CARDÁPIO + FILTROS DE CATEGORIA
    ========================================================================== */
 const Cardapio = (function () {
@@ -721,8 +809,18 @@ const CarrinhoLateral = (function () {
     $("#carrinho-taxa-entrega").textContent = taxaEntrega > 0 ? formatarPreco(taxaEntrega) : "Grátis";
     $("#carrinho-total-final").textContent = formatarPreco(totalFinal);
 
-    // Desabilita o botão de finalizar pedido se o carrinho estiver vazio
-    $("#btn-finalizar-pedido").disabled = itens.length === 0;
+    // --- Bloqueio por horário de funcionamento (fácil de desligar em config.js) ---
+    const lojaAberta = HorarioFuncionamento.estaAberto();
+    const avisoFechado = $("#aviso-loja-fechada");
+    if (avisoFechado) {
+      avisoFechado.style.display = lojaAberta ? "none" : "flex";
+      if (!lojaAberta) {
+        $("#aviso-loja-fechada-texto").textContent = HorarioFuncionamento.formatarProximaAbertura();
+      }
+    }
+
+    // Desabilita o botão de finalizar pedido se o carrinho estiver vazio OU a loja estiver fechada
+    $("#btn-finalizar-pedido").disabled = itens.length === 0 || !lojaAberta;
   }
 
   function iniciarEventos() {
@@ -771,6 +869,13 @@ const Checkout = (function () {
 
   function abrir() {
     if (Carrinho.obterItens().length === 0) return;
+
+    // Bloqueio por horário de funcionamento (desligável em config.js)
+    if (!HorarioFuncionamento.estaAberto()) {
+      Toast.mostrar("Estamos fechados no momento", HorarioFuncionamento.formatarProximaAbertura());
+      return;
+    }
+
     renderizarFormulario();
     UI.abrirModal("#modal-checkout");
   }
@@ -922,17 +1027,77 @@ const Checkout = (function () {
 
   // Monta a URL final e a abre em uma nova aba (o cliente só precisa apertar "Enviar")
   function enviarPedido() {
+    // Segunda checagem de segurança: caso o modal já estivesse aberto e o
+    // horário de funcionamento tenha mudado nesse meio tempo (ex: cliente
+    // demorou para preencher o endereço e a loja fechou nesse intervalo).
+    if (!HorarioFuncionamento.estaAberto()) {
+      UI.fecharModal("#modal-checkout");
+      Toast.mostrar("Estamos fechados no momento", HorarioFuncionamento.formatarProximaAbertura());
+      return;
+    }
+
     const { valido, dados } = validarFormulario();
     if (!valido) return;
 
     const mensagem = montarMensagemPedido(dados);
     const url = `https://wa.me/${CONFIG.whatsapp.numero}?text=${encodeURIComponent(mensagem)}`;
 
+    // Registra o pedido na planilha do Google Sheets, se essa integração
+    // estiver ativada em config.js (CONFIG.googleSheets.ativado). Isso NUNCA
+    // bloqueia o envio do pedido pelo WhatsApp, mesmo se falhar.
+    enviarParaPlanilha(dados);
+
     window.open(url, "_blank");
 
     UI.fecharModal("#modal-checkout");
     Carrinho.limparCarrinho();
     Toast.mostrar("Pedido enviado!", "Confirme o envio dentro do WhatsApp para finalizar.");
+  }
+
+  // --------------------------------------------------------------------------
+  // ENVIO DO PEDIDO PARA O GOOGLE SHEETS (opcional)
+  // --------------------------------------------------------------------------
+  // Envia um resumo do pedido para o Google Apps Script Web App configurado
+  // em CONFIG.googleSheets.urlWebApp, que grava os dados na planilha.
+  // Ver o passo a passo completo em: google-sheets/README.md
+  function enviarParaPlanilha(dadosEntrega) {
+    if (!CONFIG.googleSheets.ativado || !CONFIG.googleSheets.urlWebApp) return;
+
+    const itens = Carrinho.obterItens();
+    const totais = Carrinho.calcularTotais();
+    const taxa = obterTaxaEntregaAtual();
+
+    const payload = {
+      dataHora: new Date().toISOString(),
+      quantidadeTotal: totais.quantidadeTotal,
+      subtotalGeral: totais.subtotalGeral,
+      taxaEntrega: taxa,
+      totalFinal: totais.subtotalGeral + taxa,
+      formaRecebimento: formaRecebimento,
+      dadosEntrega: formaRecebimento === "entrega" ? dadosEntrega : {},
+      itens: itens.map(item => ({
+        nome: item.nome,
+        quantidade: item.quantidade,
+        precoUnitario: item.precoBase,
+        adicionais: item.adicionais.map(a => a.nome),
+        valorAdicionais: item.adicionais.reduce((soma, a) => soma + a.preco, 0),
+        subtotalItem: Carrinho.calcularSubtotalItem(item),
+        observacoes: item.observacoes
+      }))
+    };
+
+    // mode: "no-cors" + Content-Type "text/plain" evitam problemas de CORS
+    // com o Apps Script (que não responde a requisições de "preflight").
+    // Isso significa que não conseguimos ler a resposta, mas não precisamos:
+    // é um envio "dispare e esqueça" que nunca deve travar o pedido do cliente.
+    fetch(CONFIG.googleSheets.urlWebApp, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    }).catch(erro => {
+      console.warn("Não foi possível registrar o pedido na planilha:", erro);
+    });
   }
 
   function iniciarEventos() {
@@ -1026,6 +1191,22 @@ const UI = (function () {
 /* ============================================================================
    13. INICIALIZAÇÃO GERAL
    ========================================================================== */
+/* ============================================================================
+   14. SERVICE WORKER (PWA — necessário para "Adicionar à tela inicial")
+   ----------------------------------------------------------------------------
+   Registrado com caminho relativo ("sw.js", sem barra na frente) para
+   funcionar corretamente também em hospedagens que servem o site a partir
+   de uma subpasta (ex: GitHub Pages de projeto: usuario.github.io/meu-site/).
+   ========================================================================== */
+function registrarServiceWorker() {
+  if (!("serviceWorker" in navigator)) return;
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js").catch((erro) => {
+      console.warn("Não foi possível registrar o service worker:", erro);
+    });
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   iniciarNavbar();
   CarrosselPremium.montar();
@@ -1036,12 +1217,19 @@ document.addEventListener("DOMContentLoaded", () => {
   Checkout.iniciarEventos();
   UI.iniciarEventos();
   iniciarScrollReveal();
+  registrarServiceWorker();
 
   // Preenche dinamicamente os dados vindos de config.js (nome, whatsapp, etc.)
   preencherDadosDeConfig();
 
   // Dispara uma primeira renderização do carrinho (vazio) para exibir o estado inicial
   CarrinhoLateral.renderizar(Carrinho.obterItens(), Carrinho.calcularTotais());
+
+  // Reavalia o horário de funcionamento a cada minuto, para o caso de o
+  // cliente deixar o site aberto exatamente no momento em que a loja fecha/abre.
+  setInterval(() => {
+    CarrinhoLateral.renderizar(Carrinho.obterItens(), Carrinho.calcularTotais());
+  }, 60000);
 });
 
 // Preenche elementos do HTML marcados com atributos data-config-* usando CONFIG

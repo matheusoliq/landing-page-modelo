@@ -8,19 +8,19 @@
        SEO — TÍTULO E DESCRIÇÃO
        Altere estes valores para o nome/descrição da sua lancheria.
        ========================================================================== -->
-  <title>botekos — Hambúrgueres Artesanais | Peça pelo WhatsApp</title>
+  <title>Fábrica Smash — Hambúrgueres Artesanais | Peça pelo WhatsApp</title>
   <meta name="description" content="Hambúrgueres smash artesanais, ingredientes frescos e molhos exclusivos. Monte seu pedido e envie direto pelo WhatsApp. Entrega rápida em Porto Alegre.">
   <meta name="keywords" content="hamburgueria, smash burger, lanches, delivery, whatsapp, hambúrguer artesanal, porto alegre">
-  <meta name="author" content="botekos">
+  <meta name="author" content="Fábrica Smash">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://www.botekos.com.br/">
+  <link rel="canonical" href="https://www.fabricasmash.com.br/">
 
   <!-- ==========================================================================
        OPEN GRAPH (compartilhamento em redes sociais / WhatsApp)
        ========================================================================== -->
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="botekos">
-  <meta property="og:title" content="botekos — Hambúrgueres Artesanais">
+  <meta property="og:site_name" content="Fábrica Smash">
+  <meta property="og:title" content="Fábrica Smash — Hambúrgueres Artesanais">
   <meta property="og:description" content="Burgers smash, ingredientes frescos e molhos autorais. Peça agora direto pelo WhatsApp.">
   <meta property="og:image" content="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1200&q=80&auto=format&fit=crop">
   <meta property="og:url" content="https://www.fabricasmash.com.br/">
@@ -40,7 +40,8 @@
   <!-- PWA manifest (ver manifest.json na raiz do projeto) -->
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="assets/icons/favicon.svg">
+  <link rel="icon" href="assets/icons/icon-192.png" type="image/png" sizes="192x192">
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
 
   <!-- ==========================================================================
        SCHEMA.ORG — dados estruturados de restaurante (rich snippets no Google)
@@ -49,11 +50,11 @@
   {
     "@context": "https://schema.org",
     "@type": "FastFoodRestaurant",
-    "name": "botekos",
+    "name": "Fábrica Smash",
     "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=1200&q=80&auto=format&fit=crop",
     "servesCuisine": "Hambúrgueres",
     "priceRange": "R$20-R$60",
-    "telephone": "+5551936196761",
+    "telephone": "+5551999999999",
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "Rua das Torradeiras, 482",
@@ -89,7 +90,7 @@
        ============================================================================ -->
   <header class="navbar" id="navbar">
     <div class="container">
-      <a href="#inicio" class="marca">Lanches Do Zé5<span class="marca-ponto"></span></a>
+      <a href="#inicio" class="marca">FÁBRICA<span class="marca-ponto">.</span>SMASH</a>
 
       <nav class="nav-links" aria-label="Navegação principal">
         <a href="#inicio">Início</a>
@@ -348,6 +349,11 @@
       <div class="linha-total"><span>Subtotal</span><span id="carrinho-subtotal">R$ 0,00</span></div>
       <div class="linha-total"><span>Taxa de entrega</span><span id="carrinho-taxa-entrega">—</span></div>
       <div class="linha-total linha-total-final"><span>Total</span><span id="carrinho-total-final">R$ 0,00</span></div>
+
+      <div class="aviso-loja-fechada" id="aviso-loja-fechada" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span id="aviso-loja-fechada-texto">Estamos fechados no momento.</span>
+      </div>
 
       <button class="btn btn-primario btn-bloco" id="btn-finalizar-pedido" type="button" disabled>Finalizar Pedido</button>
       <button class="btn btn-ghost btn-bloco" id="btn-limpar-carrinho" type="button">Esvaziar carrinho</button>
