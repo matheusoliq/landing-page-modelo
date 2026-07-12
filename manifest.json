@@ -1,0 +1,19 @@
+{
+  "name": "botekos — Xis Artesanais",
+  "short_name": "botekos",
+  "description": "Hambúrgueres smash artesanais. Monte seu pedido e envie direto pelo WhatsApp.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0b",
+  "theme_color": "#0a0a0b",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "assets/icons/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+# ==============================================================================
+# ROBOTS.TXT
+# Controla o acesso de robôs de busca (Google, Bing, etc.) a este site.
+# ==============================================================================
+
+User-agent: *
+Allow: /
+
+# Aponta para o sitemap do site (ver sitemap.xml na raiz do projeto).
+# Lembre-se de atualizar o domínio abaixo para o domínio real em produção.
+Sitemap: https://www.fabricasmash.com.br/sitemap.xml

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  SITEMAP.XML
+  ------------------------------------------------------------------------
+  Como este projeto é uma landing page de página única (SPA estática),
+  o sitemap contém apenas a URL raiz. Se no futuro o site ganhar páginas
+  adicionais (ex: política de privacidade, blog, páginas por cidade),
+  adicione uma nova tag <url> para cada uma delas, seguindo o mesmo padrão.
+
+  Lembre-se de:
+    - Atualizar o domínio de <loc> para o domínio real em produção.
+    - Atualizar <lastmod> sempre que o conteúdo mudar significativamente.
+  ------------------------------------------------------------------------
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://www.fabricasmash.com.br/</loc>
+    <lastmod>2026-07-10</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>
