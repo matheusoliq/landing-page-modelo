@@ -66,7 +66,7 @@ const CONFIG = {
     // Usado apenas para EXIBIÇÃO no rodapé do site (texto livre).
     linhas: [
       { dias: "Terça a Sexta", horas: "18h00 às 23h30" },
-      { dias: "Sábado e Domingo", horas: "18h00 às 00h30" },
+      { dias: "Sábado e Domingo", horas: "17h00 às 00h30" },
       { dias: "Segunda-feira", horas: "Fechado" }
     ],
 
