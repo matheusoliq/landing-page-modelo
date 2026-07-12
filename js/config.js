@@ -36,7 +36,7 @@ const CONFIG = {
   // --------------------------------------------------------------------------
   whatsapp: {
     // Formato internacional, apenas números: código do país + DDD + número
-    numero: "5551999999999",
+    numero: "5551936196761",
     mensagemInicial: "Olá! Gostaria de fazer o seguinte pedido:",
     mensagemFinal: "Obrigado(a)! Aguardarei a confirmação do pedido. 🙌"
   },
