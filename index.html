@@ -197,9 +197,9 @@
   <section class="carrossel-secao secao" id="destaques">
     <div class="container">
       <div class="secao-cabecalho reveal">
-        <div class="eyebrow">Mais pedidos da semana</div>
-        <h2 class="titulo-secao">Nossos Destaques</h2>
-        <p class="subtitulo-secao">Os campeões de pedido, selecionados a dedo pela casa.</p>
+        <div class="eyebrow">Ofertas e mais pedidos</div>
+        <h2 class="titulo-secao">Aproveite antes que acabe</h2>
+        <p class="subtitulo-secao">Descontos especiais e os campeões de pedido da casa, num só lugar.</p>
       </div>
     </div>
 
@@ -248,14 +248,6 @@
 
       <div class="cardapio-filtros" id="cardapio-filtros"><!-- filtros gerados via JS --></div>
       <div class="cardapio-grid" id="cardapio-grade"><!-- produtos gerados via JS --></div>
-
-      <div class="assistente-cta reveal">
-        <div>
-          <strong>Bateu aquela dúvida na hora de escolher?</strong>
-          <p>Deixe nosso assistente recomendar o lanche ideal para você.</p>
-        </div>
-        <button class="btn btn-primario" type="button" data-acao="abrir-assistente">Não sei o que pedir</button>
-      </div>
     </div>
   </section>
 
@@ -369,6 +361,7 @@
         <img src="" alt="">
         <div>
           <strong id="titulo-modal-personalizacao"></strong>
+          <div class="modal-produto-preco-bloco"></div>
           <p style="margin-top:2px;"></p>
         </div>
       </div>
@@ -417,22 +410,6 @@
       </div>
       <button class="btn btn-primario" id="btn-confirmar-adicao" type="button">Adicionar ao Carrinho</button>
     </div>
-  </div>
-
-  <!-- ============================================================================
-       MODAL — ASSISTENTE "NÃO SEI O QUE PEDIR"
-       ============================================================================ -->
-  <div class="modal" id="modal-assistente" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-assistente">
-    <div class="modal-cabecalho">
-      <div>
-        <h3 id="titulo-modal-assistente">Assistente de Pedidos</h3>
-        <p>Responda e receba recomendações personalizadas.</p>
-      </div>
-      <button class="modal-fechar" type="button" data-acao="fechar-modal" aria-label="Fechar">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="modal-corpo" id="corpo-assistente"><!-- perguntas/recomendações geradas via JS --></div>
   </div>
 
   <!-- ============================================================================

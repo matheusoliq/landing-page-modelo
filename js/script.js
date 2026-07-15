@@ -16,11 +16,13 @@
      5. Carrossel Premium
      6. Renderização do Cardápio + Filtros
      7. Modal de Personalização de Produto
-     8. Assistente "Não sei o que pedir"
-     9. Carrinho Lateral (render + eventos)
-     10. Checkout (retirada/entrega) + Geração da mensagem do WhatsApp
-     11. Toast de notificação
+     8. Carrinho Lateral (render + eventos)
+     9. Checkout (retirada/entrega) + Geração da mensagem do WhatsApp
+     10. Toast de notificação
+     11. Módulo genérico de UI (overlay + modais)
      12. Inicialização geral
+     13. Horário de funcionamento (bloqueio de pedidos fora do horário)
+     14. Service Worker (PWA)
    ========================================================================== */
 
 /* ============================================================================
@@ -102,6 +104,47 @@ function buscarProdutoPorId(id) {
   return PRODUTOS.find(p => p.id === id);
 }
 
+// Calcula os dados de exibição de preço de um produto, considerando desconto.
+// Retorna sempre a mesma "forma", esteja o produto em promoção ou não —
+// assim o resto do código nunca precisa checar "if (produto.precoPromocional)".
+function obterPrecoExibicao(produto) {
+  const temDesconto = typeof produto.precoPromocional === "number" && produto.precoPromocional < produto.preco;
+  const precoFinal = temDesconto ? produto.precoPromocional : produto.preco;
+  const percentualDesconto = temDesconto
+    ? Math.round((1 - produto.precoPromocional / produto.preco) * 100)
+    : 0;
+
+  return { temDesconto, precoFinal, precoOriginal: produto.preco, percentualDesconto };
+}
+
+// Monta o HTML do bloco de preço (usado no cardápio e no carrossel).
+// Quando há desconto: preço promocional em destaque + preço original riscado.
+// Sem desconto: mostra só o preço normal, como sempre foi.
+function montarBlocoPreco(produto, classePrecoAtual, classePrecoOriginal) {
+  const { temDesconto, precoFinal, precoOriginal } = obterPrecoExibicao(produto);
+  if (!temDesconto) {
+    return `<span class="${classePrecoAtual}">${formatarPreco(precoFinal)}</span>`;
+  }
+  return `
+    <span class="${classePrecoAtual}">${formatarPreco(precoFinal)}</span>
+    <span class="${classePrecoOriginal}">${formatarPreco(precoOriginal)}</span>
+  `;
+}
+
+// Monta a etiqueta exibida sobre a imagem: "-XX%" se houver desconto,
+// ou "Mais pedido" se o produto for destaque sem desconto. Retorna "" se
+// nenhum dos dois casos se aplicar (não mostra etiqueta nenhuma).
+function montarEtiquetaProduto(produto) {
+  const { temDesconto, percentualDesconto } = obterPrecoExibicao(produto);
+  if (temDesconto) {
+    return `<div class="etiqueta-produto etiqueta-desconto">-${percentualDesconto}%</div>`;
+  }
+  if (produto.destaque) {
+    return `<div class="etiqueta-produto etiqueta-destaque">${ICONES.chama} Mais pedido</div>`;
+  }
+  return "";
+}
+
 /* ============================================================================
    3. NAVBAR (scroll + menu mobile)
    ========================================================================== */
@@ -167,23 +210,28 @@ const CarrosselPremium = (function () {
   let inicioToqueX = 0;
 
   function montar() {
-    produtosDestaque = PRODUTOS.filter(p => p.destaque && p.disponivel);
+    // A vitrine reúne os "mais pedidos" (destaque: true) E qualquer produto
+    // em promoção (precoPromocional), mesmo que não esteja marcado como
+    // destaque — assim uma oferta pontual aparece aqui automaticamente.
+    produtosDestaque = PRODUTOS.filter(p => p.disponivel && (p.destaque || obterPrecoExibicao(p).temDesconto));
     if (produtosDestaque.length === 0) return;
 
     elTrilho = $("#carrossel-trilho");
     elIndicadores = $("#carrossel-indicadores");
 
-    // Cria um slide para cada produto em destaque
+    // Cria um slide para cada produto em destaque/promoção
     elTrilho.innerHTML = produtosDestaque.map((produto, i) => `
       <article class="carrossel-slide" data-indice="${i}" data-produto-id="${produto.id}">
         <div class="carrossel-slide-imagem">
           <img src="${produto.imagem}" alt="${produto.nome}" loading="lazy">
+          ${montarEtiquetaProduto(produto)}
         </div>
         <div class="carrossel-slide-corpo">
           <h3 class="carrossel-slide-nome">${produto.nome}</h3>
-          <p class="carrossel-slide-desc">${produto.descricao}</p>
           <div class="carrossel-slide-rodape">
-            <span class="carrossel-slide-preco">${formatarPreco(produto.preco)}</span>
+            <div class="carrossel-slide-preco-bloco">
+              ${montarBlocoPreco(produto, "carrossel-slide-preco", "carrossel-slide-preco-original")}
+            </div>
             <button class="btn-add-mini" type="button" aria-label="Adicionar ${produto.nome} ao carrinho" data-acao="add-rapido" data-produto-id="${produto.id}">
               ${ICONES.mais}
             </button>
@@ -443,13 +491,16 @@ const Cardapio = (function () {
       <article class="produto-card reveal" data-produto-id="${produto.id}">
         <div class="produto-card-imagem">
           <img src="${produto.imagem}" alt="${produto.nome}" loading="lazy">
+          ${montarEtiquetaProduto(produto)}
           ${!produto.disponivel ? `<div class="produto-card-indisponivel">Indisponível</div>` : ""}
         </div>
         <div class="produto-card-corpo">
           <h3 class="produto-card-nome">${produto.nome}</h3>
           <p class="produto-card-desc">${produto.descricao}</p>
           <div class="produto-card-rodape">
-            <span class="produto-card-preco">${formatarPreco(produto.preco)}</span>
+            <div class="produto-card-preco-bloco">
+              ${montarBlocoPreco(produto, "produto-card-preco", "produto-card-preco-original")}
+            </div>
             <button class="btn-add-card" type="button" data-produto-id="${produto.id}" ${!produto.disponivel ? "disabled" : ""}>
               ${ICONES.mais} Adicionar
             </button>
@@ -509,6 +560,7 @@ const ModalPersonalizacao = (function () {
     $(".modal-produto-preview img", modal).src = produtoAtual.imagem;
     $(".modal-produto-preview img", modal).alt = produtoAtual.nome;
     $(".modal-produto-preview strong", modal).textContent = produtoAtual.nome;
+    $(".modal-produto-preco-bloco", modal).innerHTML = montarBlocoPreco(produtoAtual, "modal-produto-preco", "modal-produto-preco-original");
     $(".modal-cabecalho p", modal).textContent = produtoAtual.descricao;
 
     // --- Ponto da carne ---
@@ -584,7 +636,7 @@ const ModalPersonalizacao = (function () {
     const precoAdicionais = estado.adicionaisSelecionados
       .map(id => ADICIONAIS_DISPONIVEIS.find(a => a.id === id).preco)
       .reduce((soma, preco) => soma + preco, 0);
-    return produtoAtual.preco + precoAdicionais;
+    return obterPrecoExibicao(produtoAtual).precoFinal + precoAdicionais;
   }
 
   function atualizarTotalModal() {
@@ -604,7 +656,7 @@ const ModalPersonalizacao = (function () {
     Carrinho.adicionarItem({
       produtoId: produtoAtual.id,
       nome: produtoAtual.nome,
-      precoBase: produtoAtual.preco,
+      precoBase: obterPrecoExibicao(produtoAtual).precoFinal,
       imagem: produtoAtual.imagem,
       quantidade: estado.quantidade,
       adicionais: adicionaisEscolhidos,
@@ -626,96 +678,6 @@ const ModalPersonalizacao = (function () {
   }
 
   return { abrir, iniciarEventos };
-})();
-
-/* ============================================================================
-   8. ASSISTENTE "NÃO SEI O QUE PEDIR"
-   ----------------------------------------------------------------------------
-   Simula um atendente: faz uma pergunta, o cliente escolhe uma opção, e o
-   sistema recomenda automaticamente produtos do cardápio com base nas tags
-   e categorias configuradas em PERGUNTAS_ASSISTENTE (produtos.js).
-   ========================================================================== */
-const AssistenteRecomendacao = (function () {
-
-  function abrir() {
-    mostrarPerguntas();
-    UI.abrirModal("#modal-assistente");
-  }
-
-  function mostrarPerguntas() {
-    const corpo = $("#corpo-assistente");
-    corpo.innerHTML = `
-      <p class="assistente-pergunta">O que você está procurando hoje?</p>
-      <div class="assistente-opcoes">
-        ${PERGUNTAS_ASSISTENTE.map(p => `
-          <button type="button" class="assistente-opcao" data-id-pergunta="${p.id}">
-            ${p.texto} ${ICONES.seta}
-          </button>
-        `).join("")}
-      </div>
-    `;
-
-    $all(".assistente-opcao", corpo).forEach(botao => {
-      botao.addEventListener("click", () => {
-        const pergunta = PERGUNTAS_ASSISTENTE.find(p => p.id === botao.dataset.idPergunta);
-        mostrarRecomendacoes(pergunta);
-      });
-    });
-  }
-
-  // Pontua cada produto de acordo com o quanto ele combina com o critério
-  // escolhido (tags e/ou categoria) e retorna os 3 melhores
-  function recomendarProdutos(pergunta) {
-    const { tags = [], categorias = [] } = pergunta.match;
-
-    return PRODUTOS
-      .filter(p => p.disponivel)
-      .map(produto => {
-        let pontuacao = 0;
-        if (categorias.includes(produto.categoria)) pontuacao += 2;
-        produto.tags.forEach(tag => { if (tags.includes(tag)) pontuacao += 1; });
-        return { produto, pontuacao };
-      })
-      .filter(item => item.pontuacao > 0)
-      .sort((a, b) => b.pontuacao - a.pontuacao)
-      .slice(0, 3)
-      .map(item => item.produto);
-  }
-
-  function mostrarRecomendacoes(pergunta) {
-    const corpo = $("#corpo-assistente");
-    const recomendados = recomendarProdutos(pergunta);
-
-    corpo.innerHTML = `
-      <button type="button" class="assistente-voltar" id="btn-assistente-voltar">${ICONES.seta} Voltar</button>
-      <p class="assistente-pergunta">Baseado em "${pergunta.texto}", recomendamos:</p>
-      ${recomendados.length === 0
-        ? `<p class="subtitulo-secao">Não encontramos uma combinação perfeita, mas dê uma olhada no cardápio completo!</p>`
-        : recomendados.map(produto => `
-            <div class="assistente-resultado-item">
-              <img src="${produto.imagem}" alt="${produto.nome}">
-              <div class="info">
-                <strong>${produto.nome}</strong><br>
-                <span class="preco">${formatarPreco(produto.preco)}</span>
-              </div>
-              <button type="button" class="btn-add-mini" data-produto-id="${produto.id}" aria-label="Adicionar ${produto.nome}">
-                ${ICONES.mais}
-              </button>
-            </div>
-          `).join("")
-      }
-    `;
-
-    $("#btn-assistente-voltar", corpo).addEventListener("click", mostrarPerguntas);
-    $all(".btn-add-mini", corpo).forEach(botao => {
-      botao.addEventListener("click", () => {
-        UI.fecharModal("#modal-assistente");
-        ModalPersonalizacao.abrir(Number(botao.dataset.produtoId));
-      });
-    });
-  }
-
-  return { abrir };
 })();
 
 /* ============================================================================
@@ -1177,11 +1139,6 @@ const UI = (function () {
         fecharTodosOsModais();
         CarrinhoLateral.fechar();
       }
-    });
-
-    // Abre o assistente de recomendação
-    $all("[data-acao='abrir-assistente']").forEach(botao => {
-      botao.addEventListener("click", () => AssistenteRecomendacao.abrir());
     });
   }
 

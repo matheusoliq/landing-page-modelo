@@ -6,9 +6,9 @@
    Este é o ÚNICO arquivo que você precisa editar para adicionar, remover
    ou alterar produtos, categorias e adicionais.
 
-   O restante do sistema (carrossel, cardápio, modal de personalização,
-   assistente "Não sei o que pedir") lê estes dados automaticamente —
-   você não precisa tocar em nenhum outro arquivo para atualizar o menu.
+   O restante do sistema (carrossel, cardápio, modal de personalização)
+   lê estes dados automaticamente — você não precisa tocar em nenhum outro
+   arquivo para atualizar o menu.
    ========================================================================== */
 
 // ----------------------------------------------------------------------------
@@ -52,11 +52,23 @@ const PONTOS_DA_CARNE = ["Mal passada", "Ao ponto", "Bem passada"];
 //   nome                   -> nome exibido
 //   categoria              -> deve bater com um id em CATEGORIAS
 //   descricao              -> texto curto exibido nos cards
-//   preco                  -> preço base (number)
+//   preco                  -> preço de tabela (number)
+//   precoPromocional       -> ⭐ OPCIONAL. Se definido e menor que "preco",
+//                             o produto passa a exibir o preço promocional em
+//                             destaque, com o preço de tabela riscado ao lado
+//                             e uma etiqueta de desconto na imagem — tanto no
+//                             cardápio quanto no carrossel. É esse valor
+//                             (o promocional) que efetivamente vai para o
+//                             carrinho e para a mensagem do WhatsApp. Para
+//                             remover o desconto de um produto, basta apagar
+//                             esta linha (ou deixar undefined).
 //   imagem                 -> caminho/URL da imagem
 //   disponivel             -> true/false (esconde do cardápio se false)
-//   destaque               -> true = aparece no carrossel premium da home
-//   tags                   -> usado pelo assistente de recomendação
+//   destaque               -> true = aparece na vitrine "Ofertas e Mais Pedidos"
+//                             da home (o carrossel também inclui automaticamente
+//                             qualquer produto com desconto, mesmo sem destaque)
+//   tags                   -> livre, não é mais usado por nenhuma lógica automática
+//                             (pode remover ou manter como anotação própria)
 //   permiteAdicionais      -> true = mostra seção de adicionais no modal
 //   permitePontoCarne      -> true = mostra seletor de ponto da carne
 //   ingredientesRemoviveis -> array de strings (checkboxes "sem X")
@@ -68,6 +80,7 @@ const PRODUTOS = [
     categoria: "hamburgueres",
     descricao: "Dois smash burgers, queijo cheddar duplo, bacon crocante e molho especial da casa.",
     preco: 34.90,
+    precoPromocional: 27.90,
     imagem: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=900&q=80&auto=format&fit=crop",
     disponivel: true,
     destaque: true,
@@ -124,6 +137,7 @@ const PRODUTOS = [
     categoria: "combos",
     descricao: "Smash Bacon Supreme + batata frita média + refrigerante lata.",
     preco: 49.90,
+    precoPromocional: 42.90,
     imagem: "https://images.unsplash.com/photo-1594007654729-407eedc4be65?w=900&q=80&auto=format&fit=crop",
     disponivel: true,
     destaque: true,
@@ -166,6 +180,7 @@ const PRODUTOS = [
     categoria: "porcoes",
     descricao: "Anéis de cebola empanados e fritos, servidos com molho barbecue defumado.",
     preco: 24.90,
+    precoPromocional: 19.90,
     imagem: "https://images.unsplash.com/photo-1541592106381-b31e9677c0e5?w=900&q=80&auto=format&fit=crop",
     disponivel: true,
     destaque: false,
@@ -194,6 +209,7 @@ const PRODUTOS = [
     categoria: "bebidas",
     descricao: "Limonada cremosa batida na hora, bem gelada.",
     preco: 11.00,
+    precoPromocional: 8.90,
     imagem: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=900&q=80&auto=format&fit=crop",
     disponivel: true,
     destaque: true,
@@ -230,21 +246,4 @@ const PRODUTOS = [
     permitePontoCarne: false,
     ingredientesRemoviveis: []
   }
-];
-
-/* ----------------------------------------------------------------------------
-   PERGUNTAS DO ASSISTENTE "NÃO SEI O QUE PEDIR"
-   ----------------------------------------------------------------------------
-   Cada opção possui uma lista de `tags`/`categorias` usada para pontuar e
-   recomendar produtos automaticamente (ver função recomendarProdutos em
-   script.js). Edite livremente as perguntas ou o critério de pontuação.
-   -------------------------------------------------------------------------- */
-const PERGUNTAS_ASSISTENTE = [
-  { id: "economizar", texto: "Quero economizar 💰", match: { tags: ["economico"] } },
-  { id: "fome",       texto: "Estou com muita fome 🍽️", match: { tags: ["fome"], categorias: ["combos"] } },
-  { id: "leve",       texto: "Quero um lanche leve 🥗", match: { tags: ["leve"] } },
-  { id: "bacon",      texto: "Gosto de bacon 🥓", match: { tags: ["bacon"] } },
-  { id: "apimentado", texto: "Quero algo apimentado 🌶️", match: { tags: ["apimentado"] } },
-  { id: "combo",      texto: "Quero um combo 🍔🍟🥤", match: { categorias: ["combos"] } },
-  { id: "vegetariano",texto: "Sou vegetariano(a) 🌱", match: { tags: ["vegetariano"] } }
 ];

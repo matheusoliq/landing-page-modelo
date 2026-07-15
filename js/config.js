@@ -36,7 +36,7 @@ const CONFIG = {
   // --------------------------------------------------------------------------
   whatsapp: {
     // Formato internacional, apenas números: código do país + DDD + número
-    numero: "5551936196761",
+    numero: "5551999999999",
     mensagemInicial: "Olá! Gostaria de fazer o seguinte pedido:",
     mensagemFinal: "Obrigado(a)! Aguardarei a confirmação do pedido. 🙌"
   },
@@ -66,7 +66,7 @@ const CONFIG = {
     // Usado apenas para EXIBIÇÃO no rodapé do site (texto livre).
     linhas: [
       { dias: "Terça a Sexta", horas: "18h00 às 23h30" },
-      { dias: "Sábado e Domingo", horas: "17h00 às 00h30" },
+      { dias: "Sábado e Domingo", horas: "18h00 às 00h30" },
       { dias: "Segunda-feira", horas: "Fechado" }
     ],
 
