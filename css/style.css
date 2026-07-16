@@ -526,26 +526,14 @@ select:focus-visible {
   50% { transform: translateY(-14px); }
 }
 
-.hero-scroll-dica {
-  position: absolute;
-  bottom: var(--sp-6); left: 50%;
-  transform: translateX(-50%);
-  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
-  color: var(--cor-texto-fraco);
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  z-index: 2;
-}
-.hero-scroll-dica .linha-scroll {
-  width: 1px; height: 32px;
-  background: linear-gradient(180deg, var(--cor-laranja), transparent);
-  animation: escorregar 1.8s ease-in-out infinite;
-}
-@keyframes escorregar {
-  0% { transform: scaleY(0.3); transform-origin: top; opacity: 0.4; }
-  50% { transform: scaleY(1); transform-origin: top; opacity: 1; }
-  100% { transform: scaleY(0.3); transform-origin: bottom; opacity: 0.4; }
+/* Igual à "flutuar", mas incluindo a transformação de centralização do
+   slide ativo do carrossel — necessário porque uma animação CSS substitui
+   por completo o valor de "transform" do elemento durante sua execução.
+   Sem isso, o slide perderia a centralização (translate(-50%,-50%)) assim
+   que a animação começasse, ficando deslocado para fora da área visível. */
+@keyframes flutuarSlideAtivo {
+  0%, 100% { transform: translate(-50%, -50%) translateZ(0) scale(1) rotateY(0deg) translateY(0); }
+  50%      { transform: translate(-50%, -50%) translateZ(0) scale(1) rotateY(0deg) translateY(-10px); }
 }
 
 /* ============================================================================
@@ -562,7 +550,7 @@ select:focus-visible {
 
 .carrossel-palco {
   position: relative;
-  height: clamp(420px, 56vw, 560px);
+  height: clamp(520px, 56vw, 580px);
   perspective: 1400px;
   display: flex;
   align-items: center;
@@ -610,7 +598,7 @@ select:focus-visible {
   filter: blur(0) brightness(1.05);
   box-shadow: var(--sombra-brilho), var(--sombra-lg);
   z-index: 5;
-  animation: flutuar 5s ease-in-out infinite;
+  animation: flutuarSlideAtivo 5s ease-in-out infinite;
 }
 
 .carrossel-slide[data-posicao="anterior"] {
@@ -1263,6 +1251,7 @@ textarea.campo-observacoes::placeholder { color: var(--cor-texto-fraco); }
   .hero-acoes .btn { flex: 1; }
   .hero-provas { gap: var(--sp-4); }
 
+  .carrossel-palco { height: 450px; }
   .carrossel-slide { width: min(280px, 72vw); }
   .carrossel-slide[data-posicao="anterior"] { transform: translate(calc(-50% - 46%), -50%) translateZ(-220px) scale(0.68) rotateY(20deg); }
   .carrossel-slide[data-posicao="proximo"]  { transform: translate(calc(-50% + 46%), -50%) translateZ(-220px) scale(0.68) rotateY(-20deg); }
